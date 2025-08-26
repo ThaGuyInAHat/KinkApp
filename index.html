@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dating App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+    </style>
+</head>
+<body class="bg-[#0D1117]">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useCallback, useRef, useContext, createContext } = React;
+        const { createClient } = supabase;
+
+        // --- Supabase Initialization ---
+        const supabaseUrl = 'https://fshypdupkmlcpdmcsxmr.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaHlwZHVwa21sY3BkbWNzeG1yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyMzk3NDIsImV4cCI6MjA3MTgxNTc0Mn0.N8lzp2fXs2fu1oyNvXdccKt8VZd8J2sUXPiD5ApAwrg';
+        const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+
+        // --- Supabase Context ---
+        const SupabaseContext = createContext(null);
+        const useSupabase = () => useContext(SupabaseContext);
+
+        const SupabaseProvider = ({ children }) => {
+            return (
+                <SupabaseContext.Provider value={supabaseClient}>
+                    {children}
+                </SupabaseContext.Provider>
+            );
+        };
+
+        // --- Helper Components & Icons ---
+        const ArrowLeftIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>;
+        const HeartIcon = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>;
+        const XIcon = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
+        const MessageSquareIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>;
+        const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+        const SendIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>;
+        const PaperclipIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.59a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>;
+        const MoreVerticalIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>;
+        const FilterIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>;
+        const ShieldCheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>;
+        const HelpCircleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>;
+        const ThumbsUpIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a2 2 0 0 1 3 1.88V10"/></svg>;
+        const AlertTriangleIcon = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>;
+
+        const Loader = () => <div className="flex justify-center items-center h-full w-full"><div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-pink-500"></div></div>;
+
+        const Modal = ({ isOpen, onClose, title, children }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
+                    <div className="bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold text-white">{title}</h3>
+                            <button onClick={onClose} className="text-gray-400 hover:text-white text-3xl leading-none">&times;</button>
+                        </div>
+                        <div>{children}</div>
+                    </div>
+                </div>
+            );
+        };
+
+        const GalleryModal = ({ isOpen, onClose, username, imageUrls }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex justify-center items-center p-4" onClick={onClose}>
+                    <div className="bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl p-6" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-bold text-white">{username}'s Gallery</h3>
+                            <button onClick={onClose} className="text-gray-400 hover:text-white text-3xl leading-none">&times;</button>
+                        </div>
+                        {imageUrls && imageUrls.length > 0 ? (
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-h-[70vh] overflow-y-auto">
+                                {imageUrls.map((url, index) => <img key={index} src={url} alt={`Gallery image ${index + 1}`} className="w-full h-full object-cover rounded-lg" />)}
+                            </div>
+                        ) : <p className="text-gray-400 text-center py-8">This user hasn't added any gallery photos.</p>}
+                    </div>
+                </div>
+            );
+        };
+
+
+        // --- App Constants & Helpers ---
+        const TYPE_1_LABELS = ["Dominant", "Domme", "Predator", "Primal", "Daddy", "Mommy", "Master", "Mistress", "Brat Tamer", "Rigger / Rope Top", "Findom", "Service top", "Owner", "White Knight", "Sadist", "Leather Dom", "Pleasure Dom", "Feeder", "Mentor", "Breeder"];
+        const TYPE_2_LABELS = ["submissive", "prey", "little", "slave", "brat", "rope bunny", "finsub", "bottom", "pet", "princess", "damsel", "feedee", "cuck", "cuckqueen", "breeder"];
+        const PREFERENCE_QUESTIONS = ["Kissing", "Masturbation", "Oral (recieving)", "Oral (Giving)", "Oral (CIM)", "Deepthroating", "Face Fucking", "Vaginal", "Anal", "Rimming", "Toys", "Edging", "Chastity", "Orgasm Denial", "Forced Orgasm", "Prostate Milking", "Post Orgasm Torture", "Body Worship", "Feet", "Armpits", "Genitals", "Role play", "Niple Play", "Bondage", "Gags", "Impact play", "Sensation play", "Torture play", "Sensory Deprivation", "Electro Stimulation", "Medical Play", "Watersports", "Breath Play", "Marks", "Psychological", "Photography", "Romatic Relationship", "Sexual Only"];
+        const PREFERENCE_CHOICES = ["Yes", "Sometimes", "Irrelevant", "Not Preferred", "No"];
+        const GENDERS = ["Male", "Female", "Non-binary", "Other", "Prefer not to say"];
+        const BLOCKED_KEYWORDS = ["onlyfans", "fansly"];
+        const PROFILE_PROMPTS = ["My ideal first scene is...", "A hard limit for me is...", "I feel most dominant/submissive when...", "Aftercare for me looks like..."];
+        const REPORT_REASONS = ["Harassment", "Spam or Scams", "Inappropriate Photos", "Underage User", "Impersonation"];
+
+        // --- All Components Go Here ---
+        
+        // --- Authentication Component ---
+        const AuthScreen = () => {
+            const [isLogin, setIsLogin] = useState(true);
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+            const [message, setMessage] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+            const supabase = useSupabase();
+
+            const handleAuthAction = async (e) => {
+                e.preventDefault();
+                setIsLoading(true); setError(''); setMessage('');
+                if (!email || !password) { setError("Please fill in all fields."); setIsLoading(false); return; }
+                
+                try {
+                    let response;
+                    if (isLogin) {
+                        response = await supabase.auth.signInWithPassword({ email, password });
+                    } else {
+                        response = await supabase.auth.signUp({ 
+                            email, 
+                            password,
+                            options: {
+                                emailRedirectTo: window.location.href,
+                            }
+                        });
+                        if (response.data.user && !response.error) {
+                            setMessage("Confirmation email sent! Please check your inbox to verify your account.");
+                        }
+                    }
+                    if (response.error) throw response.error;
+
+                } catch (err) { setError(err.message); } 
+                finally { setIsLoading(false); }
+            };
+            
+            const handlePasswordReset = async () => {
+                if (!email) { setError("Please enter your email to reset password."); return; }
+                setIsLoading(true); setError(''); setMessage('');
+                try {
+                    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                        redirectTo: window.location.href,
+                    });
+                    if (error) throw error;
+                    setMessage("Password reset email sent! Check your inbox.");
+                } catch (err) { setError(err.message); } 
+                finally { setIsLoading(false); }
+            };
+
+            return (
+                <div className="min-h-screen text-white flex flex-col justify-center items-center p-4">
+                    <div className="w-full max-w-md">
+                        <h1 className="text-4xl font-bold text-center text-pink-500 mb-2">Welcome</h1>
+                        <p className="text-center text-gray-400 mb-8">Sign in or create an account to continue</p>
+                        <div className="bg-[#161B22] p-8 rounded-lg shadow-lg">
+                            <div className="flex mb-6 relative">
+                                <button onClick={() => setIsLogin(true)} className={`w-1/2 pb-3 font-semibold ${isLogin ? 'text-pink-500' : 'text-gray-400'}`}>Login</button>
+                                <button onClick={() => setIsLogin(false)} className={`w-1/2 pb-3 font-semibold ${!isLogin ? 'text-pink-500' : 'text-gray-400'}`}>Sign Up</button>
+                                <div className={`absolute bottom-0 h-0.5 bg-pink-500 transition-all duration-300 ${isLogin ? 'left-0 w-1/2' : 'left-1/2 w-1/2'}`}></div>
+                            </div>
+                             <hr className="border-gray-700 -mt-6 mb-6" />
+                            {error && <p className="bg-red-500/20 text-red-400 p-3 rounded-md mb-4 text-center">{error}</p>}
+                            {message && <p className="bg-green-500/20 text-green-400 p-3 rounded-md mb-4 text-center">{message}</p>}
+                            <form onSubmit={handleAuthAction} className="space-y-6">
+                                <div>
+                                    <label className="block text-gray-400 mb-2 text-sm">Email</label>
+                                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-[#0D1117] border border-gray-700 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-pink-500" />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-400 mb-2 text-sm">Password</label>
+                                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-[#0D1117] border border-gray-700 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-pink-500" />
+                                </div>
+                                <button type="submit" disabled={isLoading} className="w-full bg-pink-600 hover:bg-pink-700 rounded-md p-3 font-bold transition-colors disabled:bg-gray-500 flex justify-center items-center h-12">{isLoading ? <Loader/> : (isLogin ? 'Login' : 'Create Account')}</button>
+                            </form>
+                            {isLogin && <div className="text-center mt-4"><button onClick={handlePasswordReset} className="text-sm text-pink-400 hover:underline">Forgot Password?</button></div>}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Onboarding Component ---
+        const OnboardingFlow = ({ user }) => {
+            const [step, setStep] = useState(1);
+            const [userData, setUserData] = useState({
+                profileType: '', labels: [], username: '', birthdate: '', gender: '',
+                bio: '', socialLinks: { fetlife: '', reddit: '', instagram: '' },
+                profilePic: null, galleryPics: [], preferences: {}, location: null
+            });
+            const [isLoading, setIsLoading] = useState(false);
+            const [error, setError] = useState('');
+            const [socialError, setSocialError] = useState('');
+            const supabase = useSupabase();
+
+            const nextStep = () => setStep(s => s + 1);
+            const prevStep = () => setStep(s => s - 1);
+
+            const handleLabelSelection = (label) => {
+                const isType1 = TYPE_1_LABELS.includes(label);
+                const isType2 = TYPE_2_LABELS.includes(label);
+                let newProfileType = userData.profileType;
+
+                if (isType1) newProfileType = 'Type 1';
+                if (isType2) newProfileType = 'Type 2';
+                
+                if ((userData.profileType === 'Type 1' && isType2) || (userData.profileType === 'Type 2' && isType1)) {
+                    setError("You cannot select labels from both Dominant and submissive categories. Please clear your selection to switch types.");
+                    return;
+                }
+                setError('');
+
+                setUserData(prev => ({
+                    ...prev,
+                    profileType: newProfileType,
+                    labels: prev.labels.includes(label)
+                        ? prev.labels.filter(l => l !== label)
+                        : [...prev.labels, label],
+                }));
+            };
+            
+            const clearLabels = () => {
+                setUserData(prev => ({ ...prev, profileType: '', labels: [] }));
+                setError('');
+            };
+
+            const handleSocialLinkChange = (e, platform) => {
+                const value = e.target.value;
+                if (BLOCKED_KEYWORDS.some(keyword => value.toLowerCase().includes(keyword))) {
+                    setSocialError("Links to this platform are not permitted.");
+                } else {
+                    setSocialError("");
+                }
+                setUserData({...userData, socialLinks: {...userData.socialLinks, [platform]: value}});
+            };
+            
+            const handlePreferenceSelection = (question, choice) => {
+                setUserData(prevUserData => {
+                    const newPreferences = { ...prevUserData.preferences };
+                    newPreferences[question] = choice;
+                    return {
+                        ...prevUserData,
+                        preferences: newPreferences
+                    };
+                });
+            };
+
+            const handleFinalSubmit = async () => {
+                setIsLoading(true);
+                setError('');
+                
+                if (!userData.username || !userData.birthdate || !userData.gender || !userData.bio || !userData.profilePic || !userData.profileType || userData.labels.length === 0) {
+                    setError("Please ensure all fields on previous steps are complete, including selecting a role.");
+                    if (!userData.profileType || userData.labels.length === 0) setStep(1);
+                    else setStep(2);
+                    setIsLoading(false);
+                    return;
+                }
+                if (socialError) {
+                    setError("Please correct the errors in your social links.");
+                    setStep(2);
+                    setIsLoading(false);
+                    return;
+                }
+
+                try {
+                    // Check if username exists
+                    const { data: usernameData, error: usernameError } = await supabase
+                        .from('usernames')
+                        .select('user_id')
+                        .eq('username', userData.username.toLowerCase())
+                        .single();
+
+                    if (usernameData) {
+                        setError("This username is already taken. Please choose another.");
+                        setStep(2);
+                        setIsLoading(false);
+                        return;
+                    }
+
+                    // Upload profile picture
+                    const profilePicPath = `${user.id}/${Date.now()}_${userData.profilePic.name}`;
+                    const { error: uploadError } = await supabase.storage
+                        .from('avatars')
+                        .upload(profilePicPath, userData.profilePic);
+                    if(uploadError) throw uploadError;
+                    
+                    const { data: { publicUrl: profilePicUrl } } = supabase.storage
+                        .from('avatars')
+                        .getPublicUrl(profilePicPath);
+
+                    // ... (Gallery upload logic would go here) ...
+
+                    const finalProfile = {
+                        id: user.id, // Supabase uses 'id' for the user's UUID
+                        email: user.email,
+                        profile_type: userData.profileType,
+                        labels: userData.labels,
+                        username: userData.username,
+                        birthdate: userData.birthdate,
+                        gender: userData.gender,
+                        bio: userData.bio,
+                        social_links: userData.socialLinks,
+                        profile_pic_url: profilePicUrl,
+                        gallery_urls: [], // Placeholder for gallery
+                        preferences: userData.preferences,
+                        // location would be handled in MainApp
+                    };
+                    
+                    const { error: profileError } = await supabase.from('profiles').insert(finalProfile);
+                    if(profileError) throw profileError;
+
+                    const { error: usernameInsertError } = await supabase.from('usernames').insert({
+                        username: userData.username.toLowerCase(),
+                        user_id: user.id
+                    });
+                    if(usernameInsertError) throw usernameInsertError;
+
+
+                } catch (err) {
+                    console.error("Onboarding Error:", err);
+                    setError(`An error occurred: ${err.message}`);
+                } finally {
+                    setIsLoading(false);
+                }
+            };
+
+            const renderStepContent = () => {
+                switch(step) {
+                    case 1:
+                        return (
+                            <div>
+                                <h2 className="text-2xl font-bold mb-2">Choose Your Role</h2>
+                                <p className="text-gray-400 mb-6">Select one or more labels that best describe you. Your selection will determine your profile type.</p>
+                                {error && <p className="bg-red-500/20 text-red-400 p-3 rounded-md mb-4">{error}</p>}
+                                <div className="mb-4">
+                                    <h3 className="font-semibold text-lg text-pink-400 mb-2">Dominant Roles</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {TYPE_1_LABELS.map(label => (
+                                            <button key={label} onClick={() => handleLabelSelection(label)} className={`px-3 py-1 rounded-full text-sm transition-colors ${userData.labels.includes(label) ? 'bg-pink-600 text-white' : 'bg-gray-700 text-gray-300'}`}>{label}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="mb-6">
+                                    <h3 className="font-semibold text-lg text-blue-400 mb-2">submissive Roles</h3>
+                                    <div className="flex flex-wrap gap-2">
+                                        {TYPE_2_LABELS.map(label => (
+                                            <button key={label} onClick={() => handleLabelSelection(label)} className={`px-3 py-1 rounded-full text-sm transition-colors ${userData.labels.includes(label) ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}>{label}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                                 {userData.labels.length > 0 && (
+                                    <div className="text-center">
+                                        <button onClick={clearLabels} className="text-sm text-gray-400 hover:underline">Clear Selection</button>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    case 2:
+                        return (
+                            <div>
+                                <h2 className="text-2xl font-bold mb-6">Tell Us About Yourself</h2>
+                                {socialError && <p className="bg-red-500/20 text-red-400 p-3 rounded-md mb-4">{socialError}</p>}
+                                <div className="space-y-4">
+                                    <input type="text" placeholder="Unique Username" value={userData.username} onChange={e => setUserData({...userData, username: e.target.value})} className="w-full bg-gray-700 p-3 rounded-md" />
+                                    <div>
+                                        <label className="text-gray-400 text-sm">Birthdate (You must be 18+)</label>
+                                        <input type="date" value={userData.birthdate} onChange={e => {
+                                            const birthDate = new Date(e.target.value);
+                                            const today = new Date();
+                                            let age = today.getFullYear() - birthDate.getFullYear();
+                                            const m = today.getMonth() - birthDate.getMonth();
+                                            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+                                            if (age < 18) setError("You must be 18 or older to join.");
+                                            else setError("");
+                                            setUserData({...userData, birthdate: e.target.value});
+                                        }} className="w-full bg-gray-700 p-3 rounded-md" />
+                                    </div>
+                                    <select value={userData.gender} onChange={e => setUserData({...userData, gender: e.target.value})} className="w-full bg-gray-700 p-3 rounded-md">
+                                        <option value="">Select Gender</option>
+                                        {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
+                                    </select>
+                                    <textarea placeholder="Your Bio..." value={userData.bio} onChange={e => setUserData({...userData, bio: e.target.value})} className="w-full bg-gray-700 p-3 rounded-md h-24"></textarea>
+                                    <input type="text" placeholder="Fetlife Profile URL (Optional)" value={userData.socialLinks.fetlife} onChange={e => handleSocialLinkChange(e, 'fetlife')} className="w-full bg-gray-700 p-3 rounded-md" />
+                                    <input type="text" placeholder="Reddit Profile URL (Optional)" value={userData.socialLinks.reddit} onChange={e => handleSocialLinkChange(e, 'reddit')} className="w-full bg-gray-700 p-3 rounded-md" />
+                                    <input type="text" placeholder="Instagram Profile URL (Optional)" value={userData.socialLinks.instagram} onChange={e => handleSocialLinkChange(e, 'instagram')} className="w-full bg-gray-700 p-3 rounded-md" />
+                                </div>
+                            </div>
+                        );
+                    case 3:
+                        return (
+                            <div>
+                                <h2 className="text-2xl font-bold mb-6">Upload Your Photos</h2>
+                                <div className="mb-6">
+                                    <label className="block text-gray-400 mb-2">Profile Picture (Required)</label>
+                                    <p className="text-sm text-gray-500 mb-2">This will be shown to users after a match.</p>
+                                    <input type="file" accept="image/*" onChange={e => setUserData({...userData, profilePic: e.target.files[0]})} className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"/>
+                                    {userData.profilePic && <p className="text-green-400 mt-2">Selected: {userData.profilePic.name}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-gray-400 mb-2">Gallery Pictures (Up to 5, Optional)</label>
+                                     <p className="text-sm text-gray-500 mb-2">These are only shared when you grant access in a chat.</p>
+                                    <input type="file" accept="image/*" multiple onChange={e => setUserData({...userData, galleryPics: [...e.target.files].slice(0, 5)})} className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"/>
+                                     <div className="mt-2 text-green-400">
+                                        {userData.galleryPics.map(p => <p key={p.name}>{p.name}</p>)}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    case 4:
+                        return (
+                            <div>
+                                <h2 className="text-2xl font-bold mb-6">Set Your Preferences</h2>
+                                <p className="text-gray-400 mb-4">This helps us find your best matches. Select one choice for each category.</p>
+                                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                                    {PREFERENCE_QUESTIONS.map(q => (
+                                        <div key={q} className="bg-gray-800 p-3 rounded-md">
+                                            <p className="font-semibold mb-2">{q}</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {PREFERENCE_CHOICES.map(c => (
+                                                    <button key={c} onClick={() => handlePreferenceSelection(q, c)} className={`px-3 py-1 text-sm rounded-full ${userData.preferences[q] === c ? 'bg-pink-600 text-white' : 'bg-gray-700 text-gray-300'}`}>
+                                                        {c}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        );
+                    default: return null;
+                }
+            };
+            
+            const canProceed = () => {
+                switch(step) {
+                    case 1: return userData.profileType && userData.labels.length > 0;
+                    case 2: return userData.username && userData.birthdate && userData.gender && userData.bio && !error && !socialError;
+                    case 3: return userData.profilePic !== null;
+                    case 4: return true;
+                    default: return false;
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-900 text-white flex flex-col justify-center items-center p-4">
+                    <div className="w-full max-w-lg bg-gray-800 p-8 rounded-lg shadow-lg">
+                        <div className="relative h-2 bg-gray-700 rounded-full mb-8">
+                            <div className="absolute top-0 left-0 h-2 bg-pink-500 rounded-full transition-all duration-500" style={{ width: `${(step / 4) * 100}%` }}></div>
+                        </div>
+                        {error && <p className="bg-red-500/20 text-red-400 p-3 rounded-md mb-4">{error}</p>}
+                        <div className="min-h-[400px]">{renderStepContent()}</div>
+                        <div className="flex justify-between mt-8">
+                            <button onClick={prevStep} disabled={step === 1} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50">Back</button>
+                            {step < 4 ? (
+                                <button onClick={nextStep} disabled={!canProceed()} className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
+                            ) : (
+                                <button onClick={handleFinalSubmit} disabled={isLoading} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50">
+                                    {isLoading ? 'Saving...' : 'Finish & Find Matches'}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+
+        // --- Main Application Component ---
+        const MainApp = ({ user, userProfile, setUserProfile }) => {
+            const [activeTab, setActiveTab] = useState('finder');
+            const [activeChat, setActiveChat] = useState(null); // Will hold the partner's profile and match ID
+            const supabase = useSupabase();
+            
+            const handleLogout = async () => { await supabase.auth.signOut(); };
+
+            useEffect(() => {
+                if (userProfile && !userProfile.location) {
+                    navigator.geolocation.getCurrentPosition(
+                        async (position) => {
+                            const { latitude, longitude } = position.coords;
+                            await supabase.from('profiles').update({ location: { latitude, longitude } }).eq('id', user.id)
+                        },
+                        (error) => console.error("Error getting location:", error)
+                    );
+                }
+            }, [userProfile, supabase]);
+
+            const renderContent = () => {
+                if (activeChat) return <ChatScreen userProfile={userProfile} partner={activeChat.partner} matchId={activeChat.matchId} goBack={() => setActiveChat(null)} />;
+                switch(activeTab) {
+                    case 'finder': return <Finder userProfile={userProfile} />;
+                    case 'messages': return <MessagesScreen userProfile={userProfile} onChatSelect={setActiveChat} />;
+                    case 'forum': return <ForumScreen userProfile={userProfile} />;
+                    case 'profile': return <ProfileScreen userProfile={userProfile} onLogout={handleLogout} />;
+                    default: return <Finder userProfile={userProfile} />;
+                }
+            };
+
+            return (
+                <div className="h-screen w-screen bg-gray-900 text-white flex flex-col font-sans">
+                    <div className="flex-grow overflow-y-auto">{renderContent()}</div>
+                    {!activeChat && (
+                        <nav className="flex justify-around bg-gray-800 p-2 shadow-lg">
+                            <button onClick={() => setActiveTab('finder')} className={`p-2 rounded-lg ${activeTab === 'finder' ? 'text-pink-500' : 'text-gray-400'}`}><HeartIcon /></button>
+                            <button onClick={() => setActiveTab('messages')} className={`p-2 rounded-lg ${activeTab === 'messages' ? 'text-pink-500' : 'text-gray-400'}`}><MessageSquareIcon /></button>
+                            <button onClick={() => setActiveTab('forum')} className={`p-2 rounded-lg ${activeTab === 'forum' ? 'text-pink-500' : 'text-gray-400'}`}><HelpCircleIcon /></button>
+                            <button onClick={() => setActiveTab('profile')} className={`p-2 rounded-lg ${activeTab === 'profile' ? 'text-pink-500' : 'text-gray-400'}`}><UserIcon /></button>
+                        </nav>
+                    )}
+                </div>
+            );
+        };
+
+        // --- Finder Screen Component ---
+        const Finder = ({ userProfile }) => {
+            // ... Placeholder ...
+             return <div className="p-4"><h1 className="text-3xl font-bold text-pink-500">Finder</h1><p className="text-gray-400">Finder Component - To be implemented</p></div>
+        };
+
+        // --- Messages Screen Component ---
+        const MessagesScreen = ({ userProfile, onChatSelect }) => {
+            const [conversations, setConversations] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState('');
+            const supabase = useSupabase();
+
+            useEffect(() => {
+                const fetchConversations = async () => {
+                    try {
+                        // Fetch all matches for the current user
+                        const { data: matches, error: matchesError } = await supabase
+                            .from('matches')
+                            .select('*')
+                            .or(`user1_id.eq.${userProfile.id},user2_id.eq.${userProfile.id}`);
+
+                        if (matchesError) throw matchesError;
+
+                        if (matches.length === 0) {
+                            setLoading(false);
+                            return;
+                        }
+
+                        // Get the IDs of all partners
+                        const partnerIds = matches.map(m => m.user1_id === userProfile.id ? m.user2_id : m.user1_id);
+
+                        // Fetch the profiles of all partners
+                        const { data: partners, error: partnersError } = await supabase
+                            .from('profiles')
+                            .select('*')
+                            .in('id', partnerIds);
+                        
+                        if (partnersError) throw partnersError;
+
+                        // Fetch the last message for each match
+                        const lastMessagesPromises = matches.map(match =>
+                            supabase
+                                .from('messages')
+                                .select('content, created_at')
+                                .eq('match_id', match.id)
+                                .order('created_at', { ascending: false })
+                                .limit(1)
+                                .single()
+                        );
+                        
+                        const lastMessagesResults = await Promise.all(lastMessagesPromises);
+
+                        // Combine all the data
+                        const populatedConversations = matches.map((match, index) => {
+                            const partner = partners.find(p => p.id === (match.user1_id === userProfile.id ? match.user2_id : match.user1_id));
+                            return {
+                                matchId: match.id,
+                                partner,
+                                lastMessage: lastMessagesResults[index].data
+                            };
+                        });
+                        
+                        setConversations(populatedConversations);
+
+                    } catch (err) {
+                        setError('Failed to load conversations.');
+                        console.error(err);
+                    } finally {
+                        setLoading(false);
+                    }
+                };
+
+                fetchConversations();
+            }, [userProfile.id, supabase]);
+
+            if (loading) return <div className="p-4 flex justify-center items-center h-full"><Loader /></div>;
+            if (error) return <div className="p-4 text-center text-red-400">{error}</div>;
+
+            return (
+                <div className="p-4">
+                    <h1 className="text-3xl font-bold text-pink-500 mb-6">Messages</h1>
+                    {conversations.length === 0 ? (
+                        <p className="text-gray-400 text-center mt-12">You have no matches yet. Start swiping to find a connection!</p>
+                    ) : (
+                        <div className="space-y-4">
+                            {conversations.map(({ matchId, partner, lastMessage }) => (
+                                <div key={matchId} onClick={() => onChatSelect({ partner, matchId })} className="flex items-center p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700">
+                                    <img src={partner.profile_pic_url} alt={partner.username} className="w-14 h-14 rounded-full object-cover mr-4" />
+                                    <div className="flex-grow">
+                                        <h3 className="font-bold">{partner.username}</h3>
+                                        <p className="text-sm text-gray-400 truncate">{lastMessage ? lastMessage.content : 'No messages yet.'}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // --- Chat Screen Component ---
+        const ChatScreen = ({ userProfile, partner, matchId, goBack }) => {
+            const [messages, setMessages] = useState([]);
+            const [newMessage, setNewMessage] = useState('');
+            const [loading, setLoading] = useState(true);
+            const supabase = useSupabase();
+            const messagesEndRef = useRef(null);
+
+            const scrollToBottom = () => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            };
+
+            useEffect(() => {
+                const fetchMessages = async () => {
+                    const { data, error } = await supabase
+                        .from('messages')
+                        .select('*')
+                        .eq('match_id', matchId)
+                        .order('created_at', { ascending: true });
+
+                    if (error) console.error('Error fetching messages:', error);
+                    else setMessages(data);
+                    setLoading(false);
+                };
+                fetchMessages();
+            }, [matchId, supabase]);
+
+            useEffect(() => {
+                const channel = supabase
+                    .channel(`messages_${matchId}`)
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `match_id=eq.${matchId}` }, payload => {
+                        setMessages(currentMessages => [...currentMessages, payload.new]);
+                    })
+                    .subscribe();
+
+                return () => {
+                    supabase.removeChannel(channel);
+                };
+            }, [matchId, supabase]);
+
+            useEffect(scrollToBottom, [messages]);
+
+            const handleSendMessage = async (e) => {
+                e.preventDefault();
+                if (newMessage.trim() === '') return;
+
+                const messageData = {
+                    match_id: matchId,
+                    sender_id: userProfile.id,
+                    content: newMessage.trim(),
+                };
+
+                const { error } = await supabase.from('messages').insert(messageData);
+                if (error) console.error('Error sending message:', error);
+                else setNewMessage('');
+            };
+
+            return (
+                <div className="h-full flex flex-col">
+                    {/* Header */}
+                    <div className="flex items-center p-3 bg-gray-800 shadow-md">
+                        <button onClick={goBack} className="mr-4"><ArrowLeftIcon /></button>
+                        <img src={partner.profile_pic_url} alt={partner.username} className="w-10 h-10 rounded-full object-cover mr-3" />
+                        <h2 className="font-bold text-lg">{partner.username}</h2>
+                    </div>
+
+                    {/* Messages Area */}
+                    <div className="flex-grow p-4 overflow-y-auto bg-gray-900">
+                        {loading ? <Loader /> : (
+                            <div className="space-y-4">
+                                {messages.map(msg => (
+                                    <div key={msg.id} className={`flex ${msg.sender_id === userProfile.id ? 'justify-end' : 'justify-start'}`}>
+                                        <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${msg.sender_id === userProfile.id ? 'bg-pink-600 text-white rounded-br-none' : 'bg-gray-700 text-gray-200 rounded-bl-none'}`}>
+                                            <p>{msg.content}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                                <div ref={messagesEndRef} />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Input Form */}
+                    <div className="p-4 bg-gray-800">
+                        <form onSubmit={handleSendMessage} className="flex items-center space-x-3">
+                            <input
+                                type="text"
+                                value={newMessage}
+                                onChange={e => setNewMessage(e.target.value)}
+                                placeholder="Type a message..."
+                                className="flex-grow bg-gray-700 rounded-full p-3 px-5 focus:outline-none"
+                            />
+                            <button type="submit" className="bg-pink-600 rounded-full p-3 text-white">
+                                <SendIcon />
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Forum Post Item Component ---
+        const PostItem = ({ post, userProfile }) => {
+            // ... Placeholder ...
+            return <div className="bg-gray-800 p-4 rounded-lg"><p className="text-gray-400">PostItem Component - To be implemented</p></div>
+        };
+
+        // --- Forum Screen Component ---
+        const ForumScreen = ({ userProfile }) => {
+            // ... Placeholder ...
+            return <div className="p-4"><h1 className="text-3xl font-bold text-pink-500">Forum</h1><p className="text-gray-400">Forum Component - To be implemented</p></div>
+        };
+
+
+        // --- Profile Screen Component ---
+        const ProfileScreen = ({ userProfile, onLogout }) => {
+            // ... Placeholder ...
+            return (
+                <div className="p-4 space-y-6">
+                    <h1 className="text-3xl font-bold text-pink-500">Profile</h1>
+                    <p className="text-gray-400">Profile Component - To be implemented</p>
+                    <button onClick={onLogout} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-md">Logout</button>
+                </div>
+            );
+        };
+
+        // --- Report Modal Component ---
+        const ReportModal = ({ isOpen, onClose, onSubmit, reportedUsername }) => {
+            const [reason, setReason] = useState('');
+            const [details, setDetails] = useState('');
+
+            const handleSubmit = () => {
+                if (!reason) {
+                    // Replace alert with a better UI element in a real app
+                    console.error("Please select a reason for the report.");
+                    return;
+                }
+                onSubmit(reason, details);
+                setReason('');
+                setDetails('');
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title={`Report ${reportedUsername}`}>
+                    <div className="space-y-4">
+                        <p className="text-sm text-gray-400">Please select a reason for reporting this user. Your report is anonymous.</p>
+                        <div className="space-y-2">
+                            {REPORT_REASONS.map(r => (
+                                <button key={r} onClick={() => setReason(r)} className={`w-full text-left p-2 rounded-md text-sm ${reason === r ? 'bg-pink-600 text-white' : 'bg-gray-700'}`}>{r}</button>
+                            ))}
+                        </div>
+                        <textarea value={details} onChange={e => setDetails(e.target.value)} placeholder="Provide additional details (optional)" className="w-full bg-gray-700 p-2 rounded-md h-24"></textarea>
+                        <button onClick={handleSubmit} className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-md">Submit Report</button>
+                    </div>
+                </Modal>
+            );
+        };
+
+        // --- App Content ---
+        const AppContent = () => {
+            const [session, setSession] = useState(null);
+            const [userProfile, setUserProfile] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const supabase = useSupabase();
+
+            useEffect(() => {
+                const fetchSession = async () => {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    setSession(session);
+                    setLoading(false);
+                };
+                
+                fetchSession();
+
+                const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+                    setSession(session);
+                });
+
+                return () => {
+                    authListener.subscription.unsubscribe();
+                };
+            }, [supabase]);
+
+            useEffect(() => {
+                if (session?.user) {
+                    const fetchProfile = async () => {
+                        setLoading(true);
+                        const { data, error } = await supabase
+                            .from('profiles')
+                            .select('*')
+                            .eq('id', session.user.id)
+                            .single();
+                        
+                        if (data) {
+                            setUserProfile(data);
+                        }
+                        setLoading(false);
+                    };
+                    fetchProfile();
+                } else {
+                    setUserProfile(null);
+                    setLoading(false);
+                }
+            }, [session, supabase]);
+
+            if (loading) return <div className="h-screen w-screen bg-gray-900 flex justify-center items-center"><Loader /></div>;
+            
+            if (session?.user) {
+                if (userProfile) {
+                    return <MainApp user={session.user} userProfile={userProfile} />;
+                } else {
+                    return <OnboardingFlow user={session.user} />;
+                }
+            }
+            
+            return <AuthScreen />;
+        }
+
+        // --- App Entry Point ---
+        function App() {
+            return (
+                <SupabaseProvider>
+                    <AppContent />
+                </SupabaseProvider>
+            );
+        }
+        
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
