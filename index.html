@@ -397,7 +397,7 @@
                                 <p className="text-gray-400 mb-6">Choose one or more labels that best describe you.</p>
                                 {roleChoice === 'Dominant' && (
                                     <div className="mb-4">
-                                        <h3 className="font-semibold text-lg text-pink-400 mb-2">Dominant Roles (Type 1)</h3>
+                                        <h3 className="font-semibold text-lg text-pink-400 mb-2">Dominant Roles</h3>
                                         <div className="flex flex-wrap gap-2">
                                             {TYPE_1_LABELS.map(label => (
                                                 <button key={label} onClick={() => handleLabelSelection(label)} className={`px-3 py-1 rounded-full text-sm transition-colors ${userData.labels.includes(label) ? 'bg-pink-600 text-white' : 'bg-gray-700 text-gray-300'}`}>{label}</button>
@@ -407,7 +407,7 @@
                                 )}
                                 {roleChoice === 'submissive' && (
                                     <div className="mb-6">
-                                        <h3 className="font-semibold text-lg text-blue-400 mb-2">submissive Roles (Type 2)</h3>
+                                        <h3 className="font-semibold text-lg text-blue-400 mb-2">submissive Roles</h3>
                                         <div className="flex flex-wrap gap-2">
                                             {TYPE_2_LABELS.map(label => (
                                                 <button key={label} onClick={() => handleLabelSelection(label)} className={`px-3 py-1 rounded-full text-sm transition-colors ${userData.labels.includes(label) ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}>{label}</button>
