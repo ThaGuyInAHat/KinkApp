@@ -528,11 +528,17 @@
                 }
             };
 
+            let progressBarWidth = ((step - 1) / 4) * 100;
+            if (step === 4) {
+                const preferenceProgress = (preferenceStep / (PREFERENCE_QUESTIONS.length -1));
+                progressBarWidth = ((3 / 4) * 100) + (preferenceProgress * 25);
+            }
+
             return (
                 <div className="min-h-screen bg-gray-900 text-white flex flex-col justify-center items-center p-4">
                     <div className="w-full max-w-lg bg-gray-800 p-8 rounded-lg shadow-lg">
                         <div className="relative h-2 bg-gray-700 rounded-full mb-8">
-                            <div className="absolute top-0 left-0 h-2 bg-pink-500 rounded-full transition-all duration-500" style={{ width: `${(step / 4) * 100}%` }}></div>
+                            <div className="absolute top-0 left-0 h-2 bg-pink-500 rounded-full transition-all duration-500" style={{ width: `${progressBarWidth}%` }}></div>
                         </div>
                         {error && <p className="bg-red-500/20 text-red-400 p-3 rounded-md mb-4">{error}</p>}
                         <div className="min-h-[400px]">{renderStepContent()}</div>
