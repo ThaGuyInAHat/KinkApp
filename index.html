@@ -416,8 +416,6 @@
                         birthdate: userData.birthdate,
                         gender: userData.gender,
                         bio: userData.bio,
-                        // Fix: Use the userData.socialLinks state object
-                        social_links: userData.socialLinks,
                         profile_pic_url: profilePicUrl,
                         gallery_urls: [],
                         preferences: userData.preferences,
@@ -1198,6 +1196,7 @@
                 </div>
             );
         };
+
 
         // --- Forum Components ---
         const CreatePostModal = ({ isOpen, onClose, userProfile }) => {
