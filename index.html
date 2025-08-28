@@ -513,7 +513,7 @@
                                 )}
                             </div>
                         );
-                    case 3: // Basics & Bio & Socials
+                    case 3: // Basics & Bio
                         switch (aboutStep) {
                             case 1:
                                 return (
@@ -554,17 +554,6 @@
                                         <h2 className="text-2xl font-bold mb-6">Your Bio</h2>
                                         <p className="text-gray-400 mb-2">Explain what your role means to you, how you uphold those statements and what makes you the kind of partner someone should chose.</p>
                                         <textarea placeholder="Tell us about yourself..." value={userData.bio} onChange={e => setUserData({...userData, bio: e.target.value})} className="w-full bg-gray-700 p-3 rounded-md h-48"></textarea>
-                                    </div>
-                                );
-                            case 3:
-                                return (
-                                    <div>
-                                        <h2 className="text-2xl font-bold mb-6">Social Links (Optional)</h2>
-                                        <div className="space-y-4">
-                                            <input type="text" placeholder="Fetlife Profile URL" value={userData.socialLinks.fetlife} onChange={e => setUserData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, fetlife: e.target.value } }))} className="w-full bg-gray-700 p-3 rounded-md" />
-                                            <input type="text" placeholder="Reddit Profile URL" value={userData.socialLinks.reddit} onChange={e => setUserData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, reddit: e.target.value } }))} className="w-full bg-gray-700 p-3 rounded-md" />
-                                            <input type="text" placeholder="Instagram Profile URL" value={userData.socialLinks.instagram} onChange={e => setUserData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, instagram: e.target.value } }))} className="w-full bg-gray-700 p-3 rounded-md" />
-                                        </div>
                                     </div>
                                 );
                             default: return null;
@@ -663,9 +652,6 @@
                     if (aboutStep === 2) {
                         return userData.bio;
                     }
-                    if (aboutStep === 3) {
-                        return true;
-                    }
                 }
                 switch(step) {
                     case 1: return userData.profileType !== '' && userData.labels.length > 0;
@@ -678,19 +664,28 @@
             };
 
             const handleNextStep = () => {
-                if (step === 3 && aboutStep < 3) {
+                if (step === 3 && aboutStep < 2) {
                     setAboutStep(s => s + 1);
                 } else {
-                    setAboutStep(1); // Reset sub-step when changing main steps
+                    setAboutStep(1);
                     nextStep();
                 }
             };
 
+            const handlePrevStep = () => {
+                if (step === 3 && aboutStep > 1) {
+                    setAboutStep(s => s - 1);
+                } else if (step > 1) {
+                    setAboutStep(2);
+                    prevStep();
+                }
+            };
+
             let progressBarWidth = ((step - 1) / 6) * 100;
-            if (step === 3) { // Basics step
-                 progressBarWidth = ((2 / 6) * 100) + (aboutStep / 3 * (1/6 * 100));
+            if (step === 3) {
+                 progressBarWidth = ((2 / 6) * 100) + (aboutStep / 2 * (1/6 * 100));
             }
-            if (step === 6) { // Preferences step
+            if (step === 6) { 
                 const preferenceProgress = (preferenceStep / (PREFERENCE_QUESTIONS.length -1));
                 progressBarWidth = ((5 / 6) * 100) + (preferenceProgress * (1/6 * 100));
             }
@@ -705,8 +700,8 @@
                         {error && <p className="bg-red-500/20 text-red-400 p-3 rounded-md mb-4">{error}</p>}
                         <div className="min-h-[400px]">{renderStepContent()}</div>
                         <div className="flex justify-between mt-8">
-                            <button onClick={prevStep} disabled={step === 1 && aboutStep === 1} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50">Back</button>
-                            {(step < 6 && (step !== 3 || aboutStep < 3)) ? (
+                            <button onClick={handlePrevStep} disabled={step === 1} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50">Back</button>
+                            {step < 6 ? (
                                 <button onClick={handleNextStep} disabled={!canProceed()} className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
                             ) : (
                                 <button onClick={handleFinalSubmit} disabled={isLoading || !canProceed()} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50">
@@ -1436,6 +1431,7 @@
                 </div>
             );
         };
+
 
         // --- Profile Screen Component ---
         const ProfileScreen = ({ userProfile, onLogout }) => {
