@@ -307,9 +307,9 @@
 
             const nextStep = () => setStep(s => s + 1);
             const prevStep = () => {
-                if (step === 4 && aboutStep === 2) {
-                    setAboutStep(1);
-                } else {
+                if (step === 3 && aboutStep > 1) {
+                    setAboutStep(s => s - 1);
+                } else if (step > 1) {
                     setStep(s => s - 1);
                 }
             };
@@ -408,7 +408,7 @@
                         birthdate: userData.birthdate,
                         gender: userData.gender,
                         bio: userData.bio,
-                        social_links: {}, // Removed social links
+                        social_links: userData.socialLinks,
                         profile_pic_url: profilePicUrl,
                         gallery_urls: [],
                         preferences: userData.preferences,
@@ -456,8 +456,8 @@
                         }
                         return (
                             <div>
-                                <h2 className="text-2xl font-bold mb-2">Select Your Labels</h2>
-                                <p className="text-gray-400 mb-6">Choose one or more labels that best describe you.</p>
+                                <h2 className="text-2xl font-bold mb-2">{roleChoice === 'Dominant' ? 'Dominant Type' : 'Submissive Type'}</h2>
+                                <p className="text-gray-400 mb-6">Select one or more roles you identify as.</p>
                                 {roleChoice === 'Dominant' && (
                                     <div className="mb-4">
                                         <h3 className="font-semibold text-lg text-blue-400 mb-2">Dominant Roles</h3>
@@ -470,7 +470,7 @@
                                 )}
                                 {roleChoice === 'submissive' && (
                                     <div className="mb-6">
-                                        <h3 className="font-semibold text-lg text-pink-400 mb-2">submissive Roles</h3>
+                                        <h3 className="font-semibold text-lg text-pink-400 mb-2">Submissive Roles</h3>
                                         <div className="flex flex-wrap gap-2">
                                             {TYPE_2_LABELS.map(label => (
                                                 <button key={label} onClick={() => handleLabelSelection(label)} className={`px-3 py-1 rounded-full text-sm transition-colors ${userData.labels.includes(label) ? 'bg-pink-600 text-white' : 'bg-gray-700 text-gray-300'}`}>{label}</button>
@@ -504,51 +504,62 @@
                                 )}
                             </div>
                         );
-                    case 3: // Basics (Username, DOB, etc.)
-                        if (aboutStep === 1) {
-                             return (
-                                <div>
-                                    <h2 className="text-2xl font-bold mb-6">The Basics</h2>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <input type="text" placeholder="Unique Username" value={userData.username} onChange={e => setUserData({...userData, username: e.target.value})} className="w-full bg-gray-700 p-3 rounded-md" />
-                                            <div className="text-sm mt-1 h-5">
-                                                {usernameStatus === 'checking' && <p className="text-yellow-400">Checking...</p>}
-                                                {usernameStatus === 'available' && <p className="text-green-400">Available!</p>}
-                                                {usernameStatus === 'taken' && <p className="text-red-400">Username is taken.</p>}
+                    case 3: // Basics & Bio & Socials
+                        switch (aboutStep) {
+                            case 1:
+                                return (
+                                    <div>
+                                        <h2 className="text-2xl font-bold mb-6">The Basics</h2>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <input type="text" placeholder="Unique Username" value={userData.username} onChange={e => setUserData({...userData, username: e.target.value})} className="w-full bg-gray-700 p-3 rounded-md" />
+                                                <div className="text-sm mt-1 h-5">
+                                                    {usernameStatus === 'checking' && <p className="text-yellow-400">Checking...</p>}
+                                                    {usernameStatus === 'available' && <p className="text-green-400">Available!</p>}
+                                                    {usernameStatus === 'taken' && <p className="text-red-400">Username is taken.</p>}
+                                                </div>
                                             </div>
+                                            <div>
+                                                <label className="text-gray-400 text-sm">Birthdate (You must be 18+)</label>
+                                                <input type="date" value={userData.birthdate} onChange={e => {
+                                                    const birthDate = new Date(e.target.value);
+                                                    const today = new Date();
+                                                    let age = today.getFullYear() - birthDate.getFullYear();
+                                                    const m = today.getMonth() - birthDate.getMonth();
+                                                    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
+                                                    if (age < 18) setError("You must be 18 or older to join.");
+                                                    else setError("");
+                                                    setUserData({...userData, birthdate: e.target.value});
+                                                }} className="w-full bg-gray-700 p-3 rounded-md" />
+                                            </div>
+                                            <select value={userData.gender} onChange={e => setUserData({...userData, gender: e.target.value})} className="w-full bg-gray-700 p-3 rounded-md">
+                                                <option value="">Select Gender</option>
+                                                {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
+                                            </select>
                                         </div>
-                                        <div>
-                                            <label className="text-gray-400 text-sm">Birthdate (You must be 18+)</label>
-                                            <input type="date" value={userData.birthdate} onChange={e => {
-                                                const birthDate = new Date(e.target.value);
-                                                const today = new Date();
-                                                let age = today.getFullYear() - birthDate.getFullYear();
-                                                const m = today.getMonth() - birthDate.getMonth();
-                                                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
-                                                if (age < 18) setError("You must be 18 or older to join.");
-                                                else setError("");
-                                                setUserData({...userData, birthdate: e.target.value});
-                                            }} className="w-full bg-gray-700 p-3 rounded-md" />
-                                        </div>
-                                        <select value={userData.gender} onChange={e => setUserData({...userData, gender: e.target.value})} className="w-full bg-gray-700 p-3 rounded-md">
-                                            <option value="">Select Gender</option>
-                                            {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
-                                        </select>
-                                        <button onClick={() => setAboutStep(2)} disabled={!userData.username || !userData.birthdate || !userData.gender || usernameStatus !== 'available'} className="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed mt-4">Next</button>
                                     </div>
-                                </div>
-                            );
+                                );
+                            case 2:
+                                return (
+                                    <div>
+                                        <h2 className="text-2xl font-bold mb-6">Your Bio</h2>
+                                        <p className="text-gray-400 mb-2">Explain what your role means to you, how you uphold those statements and what makes you the kind of partner someone should chose.</p>
+                                        <textarea placeholder="Tell us about yourself..." value={userData.bio} onChange={e => setUserData({...userData, bio: e.target.value})} className="w-full bg-gray-700 p-3 rounded-md h-48"></textarea>
+                                    </div>
+                                );
+                            case 3:
+                                return (
+                                    <div>
+                                        <h2 className="text-2xl font-bold mb-6">Social Links (Optional)</h2>
+                                        <div className="space-y-4">
+                                            <input type="text" placeholder="Fetlife Profile URL" value={userData.socialLinks.fetlife} onChange={e => setUserData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, fetlife: e.target.value } }))} className="w-full bg-gray-700 p-3 rounded-md" />
+                                            <input type="text" placeholder="Reddit Profile URL" value={userData.socialLinks.reddit} onChange={e => setUserData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, reddit: e.target.value } }))} className="w-full bg-gray-700 p-3 rounded-md" />
+                                            <input type="text" placeholder="Instagram Profile URL" value={userData.socialLinks.instagram} onChange={e => setUserData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, instagram: e.target.value } }))} className="w-full bg-gray-700 p-3 rounded-md" />
+                                        </div>
+                                    </div>
+                                );
+                            default: return null;
                         }
-                        if (aboutStep === 2) {
-                            return (
-                                <div>
-                                    <h2 className="text-2xl font-bold mb-6">Your Bio</h2>
-                                    <textarea placeholder="Tell us about yourself..." value={userData.bio} onChange={e => setUserData({...userData, bio: e.target.value})} className="w-full bg-gray-700 p-3 rounded-md h-48"></textarea>
-                                </div>
-                            );
-                        }
-                        return null;
                     case 4: // Photos
                         return (
                             <div>
@@ -636,10 +647,20 @@
             };
             
             const canProceed = () => {
+                if (step === 3) {
+                    if (aboutStep === 1) {
+                        return userData.username && userData.birthdate && userData.gender && !error && usernameStatus === 'available';
+                    }
+                    if (aboutStep === 2) {
+                        return userData.bio;
+                    }
+                    if (aboutStep === 3) {
+                        return true;
+                    }
+                }
                 switch(step) {
                     case 1: return userData.profileType !== '' && userData.labels.length > 0;
                     case 2: return userData.looking_for_labels.length > 0;
-                    case 3: return userData.username && userData.birthdate && userData.gender && userData.bio && !error && usernameStatus === 'available';
                     case 4: return userData.profilePic !== null;
                     case 5: return Object.values(userData.prompts).some(answer => answer.trim() !== ''); // At least one prompt answered
                     case 6: return true;
@@ -647,9 +668,18 @@
                 }
             };
 
+            const handleNextStep = () => {
+                if (step === 3 && aboutStep < 3) {
+                    setAboutStep(s => s + 1);
+                } else {
+                    setAboutStep(1); // Reset sub-step when changing main steps
+                    nextStep();
+                }
+            };
+
             let progressBarWidth = ((step - 1) / 6) * 100;
             if (step === 3) { // Basics step
-                 progressBarWidth = ((2 / 6) * 100) + (aboutStep === 2 ? (1/12 * 100) : 0);
+                 progressBarWidth = ((2 / 6) * 100) + (aboutStep / 3 * (1/6 * 100));
             }
             if (step === 6) { // Preferences step
                 const preferenceProgress = (preferenceStep / (PREFERENCE_QUESTIONS.length -1));
@@ -666,11 +696,11 @@
                         {error && <p className="bg-red-500/20 text-red-400 p-3 rounded-md mb-4">{error}</p>}
                         <div className="min-h-[400px]">{renderStepContent()}</div>
                         <div className="flex justify-between mt-8">
-                            <button onClick={prevStep} disabled={step === 1} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50">Back</button>
-                            {step < 6 ? (
-                                <button onClick={nextStep} disabled={!canProceed()} className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
+                            <button onClick={prevStep} disabled={step === 1 && aboutStep === 1} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50">Back</button>
+                            {(step < 6 && (step !== 3 || aboutStep < 3)) ? (
+                                <button onClick={handleNextStep} disabled={!canProceed()} className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
                             ) : (
-                                <button onClick={handleFinalSubmit} disabled={isLoading} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50">
+                                <button onClick={handleFinalSubmit} disabled={isLoading || !canProceed()} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50">
                                     {isLoading ? 'Saving...' : 'Finish & Find Matches'}
                                 </button>
                             )}
