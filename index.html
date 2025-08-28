@@ -698,7 +698,7 @@
                         {error && <p className="bg-red-500/20 text-red-400 p-3 rounded-md mb-4">{error}</p>}
                         <div className="min-h-[400px]">{renderStepContent()}</div>
                         <div className="flex justify-between mt-8">
-                            <button onClick={handlePrevStep} disabled={step === 1 && aboutStep === 1} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50">Back</button>
+                            <button onClick={handlePrevStep} disabled={step === 1} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50">Back</button>
                             {step < 6 ? (
                                 <button onClick={handleNextStep} disabled={!canProceed()} className="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">Next</button>
                             ) : (
@@ -1149,26 +1149,10 @@
             return (
                 <div className="h-full flex flex-col">
                     {/* Header */}
-                    <div className="flex items-center justify-between p-3 bg-gray-800 shadow-md">
-                        <div className="flex items-center">
-                           <button onClick={goBack} className="mr-4"><ArrowLeftIcon /></button>
-                            <img src={partner.profile_pic_url} alt={partner.username} className="w-10 h-10 rounded-full object-cover mr-3" />
-                            <h2 className="font-bold text-lg">{partner.username}</h2>
-                        </div>
-                        <div className="relative">
-                            <button onClick={() => setMenuOpen(!isMenuOpen)}><MoreVerticalIcon /></button>
-                            {isMenuOpen && (
-                                <div className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg z-20">
-                                    {hasGalleryAccess && <button onClick={() => { setGalleryModalOpen(true); setMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-600">View Gallery</button>}
-                                    <button onClick={handleGrantGalleryAccess} className="block w-full text-left px-4 py-2 text-sm text-gray-200 hover:bg-gray-600">Grant Gallery Access</button>
-                                    <button onClick={handleUnmatch} className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-600">Unmatch</button>
-                                    <button onClick={() => { /* Open Report Modal */ setMenuOpen(false); }} className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-600">Report</button>
-                                </div>
-                            )}
-                        </div>
+                    <div className="flex items-center p-3 bg-gray-800 shadow-md">
+                        <button onClick={goBack} className="mr-4"><ArrowLeftIcon /></button>
+                        <h2 className="font-bold text-lg truncate">{partner.username}</h2>
                     </div>
-
-                    {/* Messages Area */}
                     <div className="flex-grow p-4 overflow-y-auto bg-gray-900">
                         {loading ? <Loader /> : (
                             <div className="space-y-4">
@@ -1189,8 +1173,6 @@
                             </div>
                         )}
                     </div>
-
-                    {/* Input Form */}
                     <div className="p-4 bg-gray-800">
                         <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(newMessage); }} className="flex items-center space-x-3">
                             <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
@@ -1211,106 +1193,18 @@
                 </div>
             );
         };
-
-
-        // --- Forum Components ---
-        const CreatePostModal = ({ isOpen, onClose, userProfile }) => {
-            const [title, setTitle] = useState('');
-            const [content, setContent] = useState('');
-            const [error, setError] = useState('');
-            const [isLoading, setIsLoading] = useState(false);
-            const supabase = useSupabase();
-
-            const handleSubmit = async () => {
-                if (!title || !content) {
-                    setError('Title and content are required.');
-                    return;
-                }
-                setIsLoading(true);
-                setError('');
-                const { error: insertError } = await supabase.from('posts').insert({
-                    title,
-                    content,
-                    user_id: userProfile.id
-                });
-                if (insertError) {
-                    setError('Failed to create post.');
-                    console.error(insertError);
-                } else {
-                    setTitle('');
-                    setContent('');
-                    onClose();
-                }
-                setIsLoading(false);
-            };
-
-            return (
-                <Modal isOpen={isOpen} onClose={onClose} title="Create a New Post">
-                    <div className="space-y-4">
-                        {error && <p className="text-red-400">{error}</p>}
-                        <input type="text" placeholder="Post Title" value={title} onChange={e => setTitle(e.target.value)} className="w-full bg-gray-700 p-3 rounded-md" />
-                        <textarea placeholder="What's on your mind?" value={content} onChange={e => setContent(e.target.value)} className="w-full bg-gray-700 p-3 rounded-md h-40"></textarea>
-                        <button onClick={handleSubmit} disabled={isLoading} className="w-full bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50">
-                            {isLoading ? 'Posting...' : 'Create Post'}
-                        </button>
-                    </div>
-                </Modal>
-            );
-        };
-
-        const PostItem = ({ post, onPostSelect }) => {
-            const supabase = useSupabase();
-            const [likeCount, setLikeCount] = useState(post.like_count);
-
-            const handleLike = async (e) => {
-                e.stopPropagation(); // Prevent triggering onPostSelect
-                const { data, error } = await supabase.rpc('increment_like', { post_id_arg: post.id });
-                if (!error) {
-                    setLikeCount(prev => prev + 1);
-                } else {
-                    console.error("Error liking post:", error);
-                }
-            };
-
-            return (
-                <div onClick={() => onPostSelect(post)} className="bg-gray-800 p-4 rounded-lg cursor-pointer hover:bg-gray-700/50 transition-colors">
-                    <div className="flex items-center mb-3">
-                        <img src={post.author.profile_pic_url} alt={post.author.username} className="w-10 h-10 rounded-full object-cover mr-3" />
-                        <div>
-                            <p className="font-semibold">{post.author.username}</p>
-                            <p className="text-xs text-gray-400">{new Date(post.created_at).toLocaleString()}</p>
-                        </div>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2 text-pink-400">{post.title}</h3>
-                    <p className="text-gray-300 truncate">{post.content}</p>
-                    <div className="flex justify-between items-center mt-4 text-gray-400 text-sm">
-                        <div className="flex items-center space-x-2">
-                           <button onClick={handleLike} className="flex items-center space-x-1 hover:text-pink-500">
-                                <ThumbsUpIcon /> <span>{likeCount}</span>
-                            </button>
-                            <div className="flex items-center space-x-1">
-                                <MessageSquareIcon /> <span>{post.comment_count}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
         const ForumScreen = ({ userProfile, onPostSelect }) => {
             const [posts, setPosts] = useState([]);
             const [loading, setLoading] = useState(true);
             const [error, setError] = useState('');
             const [isCreateModalOpen, setCreateModalOpen] = useState(false);
             const supabase = useSupabase();
-
             useEffect(() => {
                 const fetchPosts = async () => {
                     const { data, error } = await supabase
                         .from('posts_with_counts')
                         .select('*, author:profiles(*)')
                         .order('created_at', { ascending: false });
-
                     if (error) {
                         setError('Failed to load forum posts.');
                         console.error(error);
@@ -1320,20 +1214,16 @@
                     setLoading(false);
                 };
                 fetchPosts();
-
                 const channel = supabase
                     .channel('public:posts')
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, fetchPosts)
                     .subscribe();
-
                 return () => {
                     supabase.removeChannel(channel);
                 };
             }, [supabase]);
-
             if (loading) return <div className="p-4 flex justify-center items-center h-full"><Loader /></div>;
             if (error) return <div className="p-4 text-center text-red-400">{error}</div>;
-
             return (
                 <div className="p-4 pb-20">
                     <div className="flex justify-between items-center mb-6">
@@ -1353,40 +1243,33 @@
                 </div>
             );
         };
-
         const PostDetailScreen = ({ userProfile, post, goBack }) => {
             const [comments, setComments] = useState([]);
             const [newComment, setNewComment] = useState('');
             const [loading, setLoading] = useState(true);
             const supabase = useSupabase();
-
             const fetchComments = useCallback(async () => {
                 const { data, error } = await supabase
                     .from('comments')
                     .select('*, author:profiles(*)')
                     .eq('post_id', post.id)
                     .order('created_at', { ascending: true });
-
                 if (error) console.error("Error fetching comments:", error);
                 else setComments(data);
                 setLoading(false);
             }, [post.id, supabase]);
-
             useEffect(() => {
                 fetchComments();
                 const channel = supabase
                     .channel(`comments_${post.id}`)
                     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments', filter: `post_id=eq.${post.id}` }, payload => {
-                        // This is a simplified way to update. A more robust solution would fetch the author profile too.
                         fetchComments();
                     })
                     .subscribe();
-
                 return () => {
                     supabase.removeChannel(channel);
                 };
             }, [post.id, supabase, fetchComments]);
-
             const handleAddComment = async (e) => {
                 e.preventDefault();
                 if (newComment.trim() === '') return;
@@ -1398,10 +1281,8 @@
                 if (error) console.error("Error adding comment:", error);
                 else setNewComment('');
             };
-
             return (
                 <div className="h-full flex flex-col">
-                    {/* Header */}
                     <div className="flex items-center p-3 bg-gray-800 shadow-md">
                         <button onClick={goBack} className="mr-4"><ArrowLeftIcon /></button>
                         <h2 className="font-bold text-lg truncate">{post.title}</h2>
@@ -1446,9 +1327,6 @@
                 </div>
             );
         };
-
-
-        // --- Profile Screen Component ---
         const ProfileScreen = ({ userProfile, onLogout, setUserProfile }) => {
             const [isEditing, setIsEditing] = useState(false);
             const [formData, setFormData] = useState({
@@ -1470,19 +1348,16 @@
                         : [...prev.labels, label],
                 }));
             };
-
             const handlePromptChange = (prompt, answer) => {
                 setFormData(prev => ({
                     ...prev,
                     prompts: { ...prev.prompts, [prompt]: answer }
                 }));
             };
-
             const handleSave = async () => {
                 setLoading(true);
                 setError('');
                 setSuccess('');
-
                 try {
                     const updates = {
                         bio: formData.bio,
@@ -1495,18 +1370,15 @@
                         const filePath = `${userProfile.id}/profile_pic_${Date.now()}_${file.name}`;
                         const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
                         if (uploadError) throw uploadError;
-
                         const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
                         updates.profile_pic_url = publicUrl;
                     }
-
                     const { data, error } = await supabase
                         .from('profiles')
                         .update(updates)
                         .eq('id', userProfile.id)
                         .select()
                         .single();
-
                     if (error) throw error;
                     
                     setSuccess('Profile updated successfully!');
@@ -1519,8 +1391,6 @@
                     setLoading(false);
                 }
             };
-            
-
             return (
                 <div className="p-4 pb-20">
                     <div className="max-w-2xl mx-auto">
@@ -1532,7 +1402,6 @@
                         
                         {error && <p className="bg-red-500/20 text-red-400 p-3 rounded-md mb-4 text-center">{error}</p>}
                         {success && <p className="bg-green-500/20 text-green-400 p-3 rounded-md mb-4 text-center">{success}</p>}
-
                         {isEditing ? (
                             <>
                                 <div className="bg-gray-800 p-6 rounded-lg mb-6 space-y-4">
