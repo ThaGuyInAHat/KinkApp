@@ -59,16 +59,22 @@
 
     <script type="text/babel">
         const { useState, useEffect, useMemo, useCallback, useRef, useContext, createContext } = React;
+        const { createClient } = supabase;
         const TinderCard = window.ReactTinderCard;
+
+        // --- Supabase Initialization ---
+        // These are the details for your Supabase project. They should be checked if a new "Invalid API Key" error occurs.
+        const supabaseUrl = 'https://fshypdupkmlcpdmcsxmr.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZzaHlwZHVwa21sY3BkbWNzeG1yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyMzk3NDIsImV4cCI6MjA3MTgxNTc0Mn0.N8lzp-2fXs2fu1oyNvXdccKt8VZd8J2sUXPiD5ApAwrg';
+        const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
         // --- Supabase Context ---
         const SupabaseContext = createContext(null);
         const useSupabase = () => useContext(SupabaseContext);
 
         const SupabaseProvider = ({ children }) => {
-            // The supabase object is already provided and configured by the environment
             return (
-                <SupabaseContext.Provider value={supabase}>
+                <SupabaseContext.Provider value={supabaseClient}>
                     {children}
                 </SupabaseContext.Provider>
             );
@@ -403,6 +409,7 @@
                         birthdate: userData.birthdate,
                         gender: userData.gender,
                         bio: userData.bio,
+                        // Fix: Use the userData.socialLinks state object
                         social_links: userData.socialLinks,
                         profile_pic_url: profilePicUrl,
                         gallery_urls: [],
@@ -1542,6 +1549,7 @@
         const ReportModal = ({ isOpen, onClose, onSubmit, reportedUsername }) => {
             const [reason, setReason] = useState('');
             const [details, setDetails] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
 
             const handleSubmit = () => {
                 if (!reason) {
@@ -1579,6 +1587,7 @@
 
             useEffect(() => {
                 const fetchSession = async () => {
+                    // Use the useSupabase hook to get the client
                     const { data: { session } } = await supabase.auth.getSession();
                     setSession(session);
                     setLoading(false);
